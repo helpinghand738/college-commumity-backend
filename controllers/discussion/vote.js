@@ -2,131 +2,145 @@ const Discussion = require("../../model/discussion_schema");
 const User = require("../../model/user_schema");
 
 exports.vote = async (req, res) => {
+  const discussionId = req.body.discussionId;
+  const userId = req.userId;
+  const userDetails = req.userDetails;
+  const typeOfVote = req.params.key;
 
-    const discussionId = req.body.discussionId;
-    const userId = req.userId;
-    const userDetails = req.userDetails;
-    const typeOfVote = req.params.key;
+  if (!discussionId) {
+    return res.status(400).json({
+      error: "Server error occured!",
+    });
+  }
 
-    if (!discussionId) {
-        return res.status(400).json({
-            error: "Server error occured!"
-        })
-    }
-
-    try {
-        switch (typeOfVote) {
-            case '1':
-                if (userDetails.upvotedDiscussions.includes(discussionId)) {
-                    return res.status(401).json({
-                        error: 'Already upvoted!'
-                    })
-                }
-
-                await Discussion.updateOne(
-                    { _id: discussionId }, {
-                    $push: {
-                        upvotedUsers: userId,
-                    },
-                    $inc: {
-                        reactions: 1
-                    }
-                });
-
-                await User.updateOne(
-                    { _id: userId }, {
-                    $push: {
-                        upvotedDiscussions: discussionId,
-                    }
-                });
-                break;
-
-            case '2':
-                if (!userDetails.upvotedDiscussions.includes(discussionId)) {
-                    return res.status(401).json({
-                        error: 'Not upvoted!'
-                    })
-                }
-
-                await Discussion.updateOne(
-                    { _id: discussionId }, {
-                    $pull: {
-                        upvotedUsers: userId,
-                    },
-                    $inc: {
-                        reactions: -1
-                    }
-                });
-
-                await User.updateOne(
-                    { _id: userId }, {
-                    $pull: {
-                        upvotedDiscussions: discussionId,
-                    }
-                });
-                break;
-
-            case '3':
-                if (userDetails.downvotedDiscussions.includes(discussionId)) {
-                    return res.status(401).json({
-                        error: 'Already downvoted!'
-                    })
-                }
-
-                await Discussion.updateOne(
-                    { _id: discussionId }, {
-                    $push: {
-                        downvotedUsers: userId,
-                    },
-                    $inc: {
-                        reactions: -1
-                    }
-                });
-
-                await User.updateOne(
-                    { _id: userId }, {
-                    $push: {
-                        downvotedDiscussions: discussionId,
-                    }
-                });
-                break;
-
-            case '4':
-                if (!userDetails.downvotedDiscussions.includes(discussionId)) {
-                    return res.status(401).json({
-                        error: 'Not downvoted!'
-                    })
-                }
-
-                await Discussion.updateOne(
-                    { _id: discussionId }, {
-                    $pull: {
-                        downvotedUsers: userId,
-                    },
-                    $inc: {
-                        reactions: 1
-                    }
-                });
-
-                await User.updateOne(
-                    { _id: userId }, {
-                    $pull: {
-                        downvotedDiscussions: discussionId,
-                    }
-                });
-                break;
-
-            default:
-                break;
+  try {
+    switch (typeOfVote) {
+      case "1":
+        if (userDetails.upDiscussions.includes(discussionId)) {
+          return res.status(401).json({
+            error: "Already upvoted!",
+          });
         }
 
-        return res.status(200).json({
-            message: `Discussion upvoted successfully!`
-        })
+        await Discussion.updateOne(
+          { _id: discussionId },
+          {
+            $push: {
+              upvotedUsers: userId,
+            },
+            $inc: {
+              reactions: 1,
+            },
+          }
+        );
 
-    } catch (error) {
-        return res.status(500).json({
-            error: `Server error occcured!`
-        })
+        await User.updateOne(
+          { _id: userId },
+          {
+            $push: {
+              upDiscussions: discussionId,
+            },
+          }
+        );
+        break;
+
+      case "2":
+        if (!userDetails.upDiscussions.includes(discussionId)) {
+          return res.status(401).json({
+            error: "Not upvoted!",
+          });
+        }
+
+        await Discussion.updateOne(
+          { _id: discussionId },
+          {
+            $pull: {
+              upvotedUsers: userId,
+            },
+            $inc: {
+              reactions: -1,
+            },
+          }
+        );
+
+        await User.updateOne(
+          { _id: userId },
+          {
+            $pull: {
+              upDiscussions: discussionId,
+            },
+          }
+        );
+        break;
+
+      case "3":
+        if (userDetails.downvotedDiscussions.includes(discussionId)) {
+          return res.status(401).json({
+            error: "Already downvoted!",
+          });
+        }
+
+        await Discussion.updateOne(
+          { _id: discussionId },
+          {
+            $push: {
+              downvotedUsers: userId,
+            },
+            $inc: {
+              reactions: -1,
+            },
+          }
+        );
+
+        await User.updateOne(
+          { _id: userId },
+          {
+            $push: {
+              downvotedDiscussions: discussionId,
+            },
+          }
+        );
+        break;
+
+      case "4":
+        if (!userDetails.downvotedDiscussions.includes(discussionId)) {
+          return res.status(401).json({
+            error: "Not downvoted!",
+          });
+        }
+
+        await Discussion.updateOne(
+          { _id: discussionId },
+          {
+            $pull: {
+              downvotedUsers: userId,
+            },
+            $inc: {
+              reactions: 1,
+            },
+          }
+        );
+
+        await User.updateOne(
+          { _id: userId },
+          {
+            $pull: {
+              downvotedDiscussions: discussionId,
+            },
+          }
+        );
+        break;
+
+      default:
+        break;
     }
-}
+
+    return res.status(200).json({
+      message: `Discussion upvoted successfully!`,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: `Server error occcured!`,
+    });
+  }
+};
